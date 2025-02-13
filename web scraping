@@ -1,1 +1,42 @@
 
+require(pacman)
+p_load(tidyverse,rvest)
+
+my_html <- "https://ignaciomsarmiento.github.io/GEIH2018_sample/page1.html"
+
+html <- read_html("https://ignaciomsarmiento.github.io/GEIH2018_sample/page1.html")
+
+html %>% html_table()
+## Aparece vacio 
+
+## primer link se accede a el en network y filtrando por Fetch/XHR 
+
+##chunk 1 
+tabla <-read_html("https://ignaciomsarmiento.github.io/GEIH2018_sample/pages/geih_page_1.html")
+my_table <- tabla %>% html_table()
+
+
+#chunk 2 
+tabla_2 <- read_html("https://ignaciomsarmiento.github.io/GEIH2018_sample/pages/geih_page_2.html")
+my_table_2 <- tabla_2 %>% html_table()
+ 
+tabla_2 %>% html_table()
+
+
+
+## loop para sacar los 10 chunks 
+## Ya sirvió con los 2 primeros chunks, deberia funcionar para los otros 8 
+
+
+library(rvest)
+library(dplyr)
+
+all_tables <- list()
+
+
+for (i in 1:10) {
+  link <- paste0("https://ignaciomsarmiento.github.io/GEIH2018_sample/pages/geih_page_",i,".html")
+  page <- read_html(link)
+  
+  all_tables[[i]] <- page %>% html_table()
+}

@@ -40,3 +40,6 @@ for (i in 1:10) {
   
   all_tables[[i]] <- page %>% html_table()
 }
+
+ds <- bind_rows(all_tables)
+

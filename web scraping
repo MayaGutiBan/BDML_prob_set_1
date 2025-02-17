@@ -1,6 +1,15 @@
 
-require(pacman)
-p_load(tidyverse,rvest)
+if (!require("pacman")) install.packages("pacman")
+p_load(rio, # import/export data
+       tidyverse, # tidy-data
+       caret, # For predictive model assessment
+       gridExtra, # arrange plots
+       skimr, # summarize data 
+       stargazer, #model viz and descriptive statistics
+       rvest,
+       ggcorrplot,
+       ggplot2
+) 
 
 my_html <- "https://ignaciomsarmiento.github.io/GEIH2018_sample/page1.html"
 
@@ -27,10 +36,6 @@ tabla_2 %>% html_table()
 ## loop para sacar los 10 chunks 
 ## Ya sirvió con los 2 primeros chunks, deberia funcionar para los otros 8 
 
-
-library(rvest)
-library(dplyr)
-
 all_tables <- list()
 
 
@@ -41,5 +46,56 @@ for (i in 1:10) {
   all_tables[[i]] <- page %>% html_table()
 }
 
-ds <- bind_rows(all_tables)
+summary(all_tables)
 
+#Drop under 18 and unemployed
+final_data <- all_tables %>%
+  bind_rows() %>%
+  filter(age>=18 & ocu==1)
+  
+#Description variables- age, sex, education, state, race, occupation, industry,
+
+#definiciones: clase (=1 urban; =0 rural), college(=1 if terciary educ.;=0 otherwise), cuentaPropia (=1 if self employed; =0 otherwise), 
+#depto, directorio(llave de vivienda), estrato1, formal, hoursWorkActu*, hoursWorkUsual,  informal, ingtot, maxEducLevel, mes, oficio, 
+#p6426(tiempo trabajado en empresa, negocio, industria), p6580s1(cuanto recibio por bonificaciones), p6870(tamano empresa), p7040 (otro trabajo), 
+#relab(type of occupation), secuencia_p(llave de hogar), sex(=1 male, =0 female), sizeFirm(size of the firm by categories), totalHoursWorked(	total hours worked previous week),
+#y_bonificacio~m(	Ingreso monetario en el mes), y_ingLab_m(labor income salaried - nominal monthly - all occ. (includes tips and commission)
+
+
+variables<- c("clase", "cuentaPropia", "depto", "estrato1", "formal", "ingtot", "maxEducLevel", "p6426", "p7040", "relab", "sex", "sizeFirm", "totalHoursWorked")
+
+df <- final_data %>%  
+  select(variables)
+
+skim(df)
+
+stargazer(as.data.frame(final_data[,variables]), type="text")
+
+#Scatterplot matrix
+
+# Convert data to long format for easy plotting
+df_long <- pivot_longer(df, cols = -ingtot, names_to = "Variable", values_to = "Value")
+
+# Plot multiple scatter plots
+ggplot(df_long, aes(x = Value, y = ingtot)) +
+  geom_point(alpha = 0.5, color = "blue") +
+  facet_wrap(~ Variable, scales = "free_x") +
+  theme_minimal() +
+  labs(title = "Total Income vs Other Variables", x = "Variable Value", y = "Total Income")
+
+
+
+cor_matrix <- df %>% 
+  cor(., method = "spearman") %>% 
+  ggcorrplot(, type = "lower", lab = TRUE) +
+  theme_minimal() +
+  labs(x = " ", y = " ")
+
+# Compute the correlation matrix
+cor_matrix <- df %>% 
+  cor(method = "spearman")
+
+# Visualize the correlation matrix
+ggcorrplot(cor_matrix, type = "lower", lab = TRUE) +
+  theme_minimal() +
+  labs(x = "", y = "")

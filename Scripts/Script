@@ -1,4 +1,17 @@
+##########################################################
+#Problem set 1: predicting income
+#Authors: Grupo 12
+#Script description:
 
+##########################################################
+
+
+# Clean the workspace -----------------------------------------------------
+rm(list=ls())
+cat("\014")
+local({r <- getOption("repos"); r["CRAN"] <- "http://cran.r-project.org"; options(repos=r)}) #set repo
+
+# Load Packages -----------------------------------------------------------
 if (!require("pacman")) install.packages("pacman")
 p_load(rio, # import/export data
        tidyverse, # tidy-data
@@ -8,36 +21,35 @@ p_load(rio, # import/export data
        stargazer, #model viz and descriptive statistics
        rvest,
        ggcorrplot,
-       ggplot2
+       ggplot2,
+       broom,
+       knitr,
+       mosaic,
+       stats
 ) 
-
-my_html <- "https://ignaciomsarmiento.github.io/GEIH2018_sample/page1.html"
-
+  
+# Load data ---------------------------------------------------------------
 html <- read_html("https://ignaciomsarmiento.github.io/GEIH2018_sample/page1.html")
 
-html %>% html_table()
-## Aparece vacio 
+html %>% html_table() ## Aparece vacio 
 
-## primer link se accede a el en network y filtrando por Fetch/XHR 
+## Primer link se accede a el en network y filtrando por Fetch/XHR 
 
-##chunk 1 
+## Chunk 1 
 tabla <-read_html("https://ignaciomsarmiento.github.io/GEIH2018_sample/pages/geih_page_1.html")
 my_table <- tabla %>% html_table()
 
 
-#chunk 2 
+# Chunk 2 
 tabla_2 <- read_html("https://ignaciomsarmiento.github.io/GEIH2018_sample/pages/geih_page_2.html")
 my_table_2 <- tabla_2 %>% html_table()
- 
+
 tabla_2 %>% html_table()
-
-
 
 ## loop para sacar los 10 chunks 
 ## Ya sirvió con los 2 primeros chunks, deberia funcionar para los otros 8 
 
 all_tables <- list()
-
 
 for (i in 1:10) {
   link <- paste0("https://ignaciomsarmiento.github.io/GEIH2018_sample/pages/geih_page_",i,".html")
@@ -48,54 +60,168 @@ for (i in 1:10) {
 
 summary(all_tables)
 
-#Drop under 18 and unemployed
-final_data <- all_tables %>%
-  bind_rows() %>%
+# Clean data ---------------------------------------------------------------
+#Combine lists, drop under 18 and unemployed
+db_geih <- all_tables %>%
+  flatten() %>%  # Asegura que la lista no tenga sublistas
+  bind_rows() %>%  # Une todas las tablas en un solo tibble (??)
   filter(age>=18 & ocu==1)
-  
+
+# Guardar data limpia
+write.csv(db_geih,"clean_GEIH.csv",row.names = F)
+
 #Description variables- age, sex, education, state, race, occupation, industry,
 
-#definiciones: clase (=1 urban; =0 rural), college(=1 if terciary educ.;=0 otherwise), cuentaPropia (=1 if self employed; =0 otherwise), 
+#definiciones: age, clase (=1 urban; =0 rural), college(=1 if terciary educ.;=0 otherwise), cuentaPropia (=1 if self employed; =0 otherwise), 
 #depto, directorio(llave de vivienda), estrato1, formal, hoursWorkActu*, hoursWorkUsual,  informal, ingtot, maxEducLevel, mes, oficio, 
-#p6426(tiempo trabajado en empresa, negocio, industria), p6580s1(cuanto recibio por bonificaciones), p6870(tamano empresa), p7040 (otro trabajo), 
+#p6050(cual es parentezco jefe de hogar), p6426(tiempo trabajado en empresa, negocio, industria), p6580s1(cuanto recibio por bonificaciones), p6870(tamano empresa), p7040 (otro trabajo), 
 #relab(type of occupation), secuencia_p(llave de hogar), sex(=1 male, =0 female), sizeFirm(size of the firm by categories), totalHoursWorked(	total hours worked previous week),
 #y_bonificacio~m(	Ingreso monetario en el mes), y_ingLab_m(labor income salaried - nominal monthly - all occ. (includes tips and commission)
+#y_salary_m, y_salary_m_hu, y_ingLab_m, y_primaServicios_m, y_ingLab_m_ha, y_total_m, y_total_m_ha
+
+# Cargar datos 
+db_geih <- read_csv("clean_GEIH.csv")
+head(db_geih, 5)
+
+variables<- c("age", "cuentaPropia", "estrato1", "formal", "ingtot", "maxEducLevel", "p6050", "p6426", "p7040", "relab", "sex", "sizeFirm", 
+              "totalHoursWorked", "y_salary_m", "y_salary_m_hu", "y_ingLab_m", "y_primaServicios_m", "y_ingLab_m_ha", "y_total_m", "y_total_m_ha")
+
+stargazer(as.data.frame(db_geih[, c("clase", "depto")]), type = "text", summary = TRUE)
+
+#Clase y depto no tienen variabilidad entonces se eliminan
+
+# Inputacion medias de variables numericas, renombrar y crear variables
+db_geih_1 <- db_geih %>%  
+  select(variables) %>% 
+  mutate(across(where(is.numeric), ~ replace_na(., ifelse(is.integer(.), as.integer(median(., na.rm = TRUE)), mean(., na.rm = TRUE))))) %>% 
+  rename( parentesco_jhogar = "p6050",
+          tiempo_trabajando = "p6426", # la variable esta en meses
+          otro_trabajo = "p7040",
+          gender = "sex") %>% 
+  mutate( female = 1-gender, ## 1 if female
+          H_Head = ifelse( parentesco_jhogar== 1, 1, 0)) #Household head
+          
+# Clean data ---------------------------------------------------------------
+
+ceros <- db_geih_1 %>% summarise(across(where(is.numeric), ~ sum(. == 0, na.rm = TRUE)))
+
+stargazer(as.data.frame(db_geih_1), type = "text")
+outliers <- db_geih_1 %>% filter(totalHoursWorked > 120)
+
+low <- quantile(db_geih_1$totalHoursWorked, 0.01)
+up <- quantile(db_geih_1$totalHoursWorked, 0.99)
+
+ggplot(data = db_geih_1, aes(y = totalHoursWorked, x = "")) +
+  theme_bw() +
+  geom_boxplot(outlier.shape = NA) +  # Hide outliers to avoid overlap
+  geom_jitter(width = 0.2, alpha = 0.4, color = "gray") +  # Add jittered points
+  geom_hline(yintercept = low, linetype = "dashed", color = "blue", linewidth = 0.5) +
+  geom_hline(yintercept = up, linetype = "dashed", color = "blue", linewidth = 0.5) +
+  annotate("text", x = 1, y = low, label = paste0("Low: ", round(low,1)), vjust = -1, color = "blue") +
+  annotate("text", x = 1, y = up, label = paste0("Up: ", round(up,1)), vjust = -1, color = "blue") +
+  labs(y = "Total Hours Worked", x = "", title = "Boxplot of Total Hours Worked with 1st & 99th Percentile")
 
 
-variables<- c("clase", "cuentaPropia", "depto", "estrato1", "formal", "ingtot", "maxEducLevel", "p6426", "p7040", "relab", "sex", "sizeFirm", "totalHoursWorked")
+variables_categoricas <- c("cuentaPropia", "estrato1", "formal", "maxEducLevel", "parentesco_jhogar", "otro_trabajo", "relab", "gender", "female", "H_Head", "sizeFirm")
+db_geih_1 <- db_geih_1 %>%
+  mutate(across(all_of(variables_categoricas), as.factor))
 
-df <- final_data %>%  
-  select(variables)
+#ingreso total limpia
+db_geih_1 %>%
+  filter(ingtot== 0)
 
-skim(df)
+db_geih_1 <- db_geih_1 %>% 
+  group_by(estrato1) %>% 
+  mutate(mean_ingtot = mean(ingtot, na.rm=T)) %>% 
+  ungroup() %>% 
+  mutate(ingtot = ifelse(ingtot==0, yes =mean_ingtot, no=ingtot),
+         log_ingtot = log(ingtot)) 
 
-stargazer(as.data.frame(final_data[,variables]), type="text")
+# Function to create a single boxplot
+create_boxplot <- function(data, y_var, y_label) {
+  ggplot(data, aes(y = !!sym(y_var), x = "")) +
+    geom_boxplot() +
+    theme_bw() +
+    ylab(y_label) +
+    xlab("")
+}
 
-#Scatterplot matrix
+# Function to create grouped boxplots with color by gender
+create_grouped_boxplot <- function(data, x_var, y_var, x_label = NULL, show_legend = FALSE) {
+  p <- ggplot(data, aes(x = as.factor(!!sym(x_var)), y = !!sym(y_var))) +
+    geom_boxplot() +
+    geom_point(aes(colour = as.factor(female))) +
+    scale_color_manual(values = c("0"="red", "1"="blue"), 
+                       labels = c("0"="Hombre", "1"="Mujer"), 
+                       name = "Sexo") +
+    labs(x = x_label, y = "Total Income (log)")
+  
+  # Hide legend if show_legend is FALSE
+  if (!show_legend) {
+    p <- p + guides(color = "none")
+  }
+  return(p)
+}
 
-# Convert data to long format for easy plotting
-df_long <- pivot_longer(df, cols = -ingtot, names_to = "Variable", values_to = "Value")
+# Create plots
+a <- create_boxplot(db_geih_1, "totalHoursWorked", "Total Hours Worked")
+b <- create_boxplot(db_geih_1, "age", "Age")
+c <- create_boxplot(db_geih_1, "log_ingtot", "Total Income (log)")
+d <- create_grouped_boxplot(db_geih_1, "estrato1", "log_ingtot", "Socioeconomic Stratum")  # Show legend here
+e <- create_grouped_boxplot(db_geih_1, "cuentaPropia", "log_ingtot", "Self-Employed")
+f <- create_grouped_boxplot(db_geih_1, "maxEducLevel", "log_ingtot", "Max Education Level", show_legend = TRUE)
+
+# Arrange all plots in a grid
+grid.arrange(a, b, c, d, e, f, ncol = 3)
+
+# Histograms Hours, age, income
+a<- ggplot(db_geih_1, aes(x = totalHoursWorked )) +
+  geom_histogram(bins = 50, fill = "darkblue") +
+  labs(x = "Total Hours Worked", y = "N. Obs") +
+  theme_bw() 
+
+b<- ggplot(db_geih_1, aes(x = age )) +
+  geom_histogram(bins = 20, fill = "darkblue") +
+  labs(x = "Age", y = "N. Obs") +
+  theme_bw() 
+
+c <- ggplot(db_geih_1, aes(x = log_ingtot)) +
+  geom_histogram(bins = 50, fill = "darkblue") +
+  labs(x = "Total Income (log)", y = "N. Obs") +
+  theme_bw() 
+
+grid.arrange(a,b,c, ncol = 3)
+
+
+#Scatterplot matrix- Convert data to long format for easy plotting
+df_long <- db_geih_1 %>%
+  pivot_longer(cols = c("age", "tiempo_trabajando", "totalHoursWorked"), 
+               names_to = "Variable", 
+               values_to = "Value")
 
 # Plot multiple scatter plots
-ggplot(df_long, aes(x = Value, y = ingtot)) +
+ggplot(df_long, aes(x = Value, y = log_ingtot)) +
   geom_point(alpha = 0.5, color = "blue") +
   facet_wrap(~ Variable, scales = "free_x") +
   theme_minimal() +
-  labs(title = "Total Income vs Other Variables", x = "Variable Value", y = "Total Income")
+  labs(title = "Total Income vs Other Variables", x = "Variable Value", y = "Total Income (log)")
 
 
+# Compute a correlation matrix and visualize 
+cor_matrix <- db_geih_1 %>%
+  select(where(is.numeric)) %>%  # Select only numeric variables
+  cor(method = "spearman", use = "pairwise.complete.obs") %>%  # Handle NAs pairwise
+  round(1)
 
-cor_matrix <- df %>% 
-  cor(., method = "spearman") %>% 
-  ggcorrplot(, type = "lower", lab = TRUE) +
-  theme_minimal() +
-  labs(x = " ", y = " ")
-
-# Compute the correlation matrix
-cor_matrix <- df %>% 
-  cor(method = "spearman")
-
-# Visualize the correlation matrix
 ggcorrplot(cor_matrix, type = "lower", lab = TRUE) +
   theme_minimal() +
   labs(x = "", y = "")
+
+M <- db_geih_1 %>%
+  select(all_of(c("log_ingtot", "age", "tiempo_trabajando", "totalHoursWorked")))
+
+cor_matrix <- cor(M, use = "pairwise.complete.obs")  # Compute correlation matrix
+corrplot(cor_matrix, method = "circle")
+
+# Guardar data limpia
+write_rds(db_geih_1,"clean_GEIH.rds")

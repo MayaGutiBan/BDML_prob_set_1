@@ -1,1 +1,89 @@
+##########################################################
+#Problem set 1: predicting income
+#Authors: Grupo 12
+#Script description:
 
+##########################################################
+
+# Clean the workspace -----------------------------------------------------
+rm(list=ls())
+cat("\014")
+local({r <- getOption("repos"); r["CRAN"] <- "http://cran.r-project.org"; options(repos=r)}) #set repo
+
+#set working director
+setwd("~/Documents/GitHub")
+
+# Load Packages -----------------------------------------------------------
+if (!require("pacman")) install.packages("pacman")
+p_load(rio, # import/export data
+       tidyverse, # tidy-data
+       caret, # For predictive model assessment
+       gridExtra, # arrange plots
+       skimr, # summarize data 
+       stargazer, #model viz and descriptive statistics
+       rvest,
+       ggcorrplot,
+       ggplot2,
+       broom,
+       knitr,
+       mosaic,
+       stats
+) 
+
+# Cargar datos 
+db_geih <- read_rds("clean_GEIH.rds")
+head(db_geih, 5)
+
+# Crear una tabla con kable
+skim_result <- skim(db_geih)
+kable(skim_result)
+
+sum(is.na(db_geih)) 
+
+stargazer(as.data.frame(db_geih, type="text")
+
+
+# 3. Age-wage profile ---------------------------------------------------------------
+
+# Fit the regression model
+model <- lm(log_ingtot ~ age + I(age^2), data = db_geih)
+
+# Display summary
+summary(model)
+
+# Tidy output with p-values and confidence intervals
+tidy(model)
+
+ggplot(db_geih) + 
+  geom_histogram(aes(x = age), binwidth=1)
+
+mean(db_geih$age, na.rm = TRUE) 
+age_mean_bootstrap = mosaic::resample(db_geih$age)
+mean(age_mean_bootstrap, na.rm = TRUE) 
+
+boot_age <- do(10000) * mean(~age, data = resample(db_geih))
+ggplot(boot_age) + 
+  geom_histogram(aes(x=mean))
+
+boot_age %>%
+  summarize(std_err_age = sd(mean))
+
+confint(boot_age, level=0.95)
+
+ggplot(db_geih) + 
+  geom_jitter(aes(x=age, y=log_ingtot), alpha=0.05)+
+  geom_smooth(aes(x = age, y = log_ingtot), method = "lm", formula = y ~ poly(x, 2))
+
+boot_model <- do(10000) * lm(log_ingtot ~ age + I(age^2), data = resample(db_geih))
+confint(boot_model, level = 0.95)
+
+# Run the regression
+model <- lm(log_ingtot ~ age + I(age^2), data = db_geih)
+
+# Extract coefficients
+b1 <- coef(model)["age"]
+b2 <- coef(model)["I(age^2)"]
+
+# Compute peak age
+peak_age <- -b1 / (2 * b2)
+print(peak_age)

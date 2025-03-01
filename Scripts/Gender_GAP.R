@@ -57,14 +57,15 @@ fwl_bootstrap <- function(data, indices) {
 }
 
 # Run bootstrap with 1000 replications
-set.seed(123)  # For reproducibility
+set.seed(424)  # For reproducibility
 boot_results <- boot(data = db_geih_1, statistic = fwl_bootstrap, R = 1000)
 
 # Get bootstrap estimate and standard error
 boot_results
 boot.ci(boot_results, type = "perc")
 
-
+boot_coef <- mean(boot_results$t)  # Mean bootstrap estimate
+boot_se <- sd(boot_results$t)  
 
 
 ### 4c. plot the predicted age-wage profile and estimate the implied “peak ages” with the respective confidence intervals 

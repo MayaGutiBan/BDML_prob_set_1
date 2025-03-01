@@ -12,13 +12,10 @@ tidy(uncon_model)
 con_model <- lm(log_ingtot ~ female + age + I(age^2) + cuentaPropia + estrato1 +
                   formal + maxEducLevel + parentesco_jhogar + tiempo_trabajando +
                   otro_trabajo + relab + sizeFirm + totalHoursWorked, data = db_geih)
-                  
-#7495 El mes pasado, ¿recibió pagos por concepto de arriendos y/o pensiones?
-#college
-#oficio
+
 stargazer(con_model,type="text",digits=7)                
                   
-# 4bi. FWL with bootstrap
+# 4bi. FWL
 db_geih$female <- as.numeric(as.character(db_geih$female))  # Convert factor to numeric
 res_female <- lm(female ~ age + I(age^2) + cuentaPropia + estrato1 +
                    formal + maxEducLevel + parentesco_jhogar + tiempo_trabajando +
@@ -35,6 +32,41 @@ fwl_model <- lm(res_log_ingtot ~ res_female)
 summary(fwl_model)
 
 stargazer(con_model,fwl_model,type="text",digits=7)
+
+## 4bii. FWL with bootstrap
+
+# Load necessary library
+library(boot)
+
+# Define bootstrap function, same process of the FWL estimation
+fwl_bootstrap <- function(data, indices) {
+  boot_data <- data[indices, ] 
+ 
+  res_female <- lm(female ~ age + I(age^2) + cuentaPropia + estrato1 +
+                     formal + maxEducLevel + parentesco_jhogar + tiempo_trabajando +
+                     otro_trabajo + relab + sizeFirm + totalHoursWorked, data = boot_data)$residuals
+   
+  res_log_ingtot <- lm(log_ingtot ~ age + I(age^2) + cuentaPropia + estrato1 +
+                formal + maxEducLevel + parentesco_jhogar + tiempo_trabajando +
+                otro_trabajo + relab + sizeFirm + totalHoursWorked, data = boot_data)$residuals
+  
+  boot_model <- lm(res_log_ingtot ~ res_female)
+  
+  # Return the coefficient estimate for female
+  return(coef(boot_model)[2])
+}
+
+# Run bootstrap with 1000 replications
+set.seed(123)  # For reproducibility
+boot_results <- boot(data = db_geih_1, statistic = fwl_bootstrap, R = 1000)
+
+# Get bootstrap estimate and standard error
+boot_results
+boot.ci(boot_results, type = "perc")
+
+
+
+
 ### 4c. plot the predicted age-wage profile and estimate the implied “peak ages” with the respective confidence intervals 
 
 

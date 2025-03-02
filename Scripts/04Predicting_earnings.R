@@ -43,7 +43,12 @@ formulas <- list(
   form_4 = log_ingtot ~ female + age + I(age^2) + cuentaPropia + estrato1 +
     formal + maxEducLevel + parentesco_jhogar + tiempo_trabajando +
     otro_trabajo + relab + sizeFirm + totalHoursWorked, #conditional model from point 4
-  form_5 = totalHoursWorked ~ log_ingtot * age + gender  # Interaction effect
+  form_5 = log_ingtot  ~  age + I(age^2) + female + totalHoursWorked +I(totalHoursWorked^2), ##Adding non-linearity 
+  form_6 = log_ingtot ~ age + I(age^2) + female + totalHoursWorked*sizeFirm,
+  form_7 = log_ingtot ~ female + age + I(age^2) + cuentaPropia + estrato1 +
+    formal + maxEducLevel + parentesco_jhogar + tiempo_trabajando +
+    otro_trabajo + relab + sizeFirm + totalHoursWorked + totalHoursWorked*sizeFirm
+) # Interaction effect
 )
 
 # Initialize a list to store RMSE scores

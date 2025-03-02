@@ -56,7 +56,7 @@ This project is fully reproducible. To replicate the analysis:
 Clone this repository: git clone https://github.com/MayaGutiBan/BDML_prob_set_1.git
 cd BDML_prob_set_1
 
-### Key results
+### Key results: La idea acá es poner los resultados principales
 
 
 

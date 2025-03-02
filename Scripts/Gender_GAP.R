@@ -107,5 +107,29 @@ boot_female <- boot(db_geih_1, statistic = peak_age_boot, R = B, gender = 1)
 ci_male <- boot.ci(boot_male, type = "perc")
 ci_female <- boot.ci(boot_female, type = "perc")
 
-print(ci_male)
-print(ci_female)
+
+##### Age-wage predicted plot with CI by gender 
+
+## etxtract the CI 
+ci_female_low <- ci_female$percent[4]
+ci_female_up <- ci_female$percent[5]
+
+ci_male_low <- ci_male$percent[4]
+ci_male_up <- ci_male$percent[5]
+
+## lablel var for better looking graph 
+db_geih_1$gender <- factor(db_geih_1$gender, labels = c("Female", "Male"))
+
+## Plot 
+ggplot(db_geih_1, aes(x = age, y = predict_loginc, color = gender,)) +
+  geom_smooth(method = "loess", se = TRUE) + 
+  geom_vline(xintercept = boot_male$t0, linetype = "dashed", color = "darkblue")+ ## peak age male
+  geom_vline(xintercept = boot_female$t0, linetype = "dashed", color = "red")+ ## pecl age female 
+  geom_ribbon(aes(xmin = ci_male_low, xmax = ci_male_up), width = 0.2, alpha = 0.5,color = "blue") + ##CI peak age male 
+  geom_ribbon(aes(xmin = ci_female_low, xmax = ci_female_up), width = 0.2, alpha = 0.4,color = "red") + ## CI peak age female
+  labs(title = "Predicted Age-Wage Profile by Gender",
+       x = "Age",
+       y = "Log(Predicted Income)") 
+
+
+

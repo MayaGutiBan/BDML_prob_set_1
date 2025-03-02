@@ -30,7 +30,8 @@ p_load(rio, # import/export data
 ) 
 
 # Cargar datos 
-db_geih <- read_rds("stores/clean_GEIH.rds")
+url <- "https://raw.githubusercontent.com/MayaGutiBan/BDML_prob_set_1/refs/heads/main/stores/GEIH.csv?token=GHSAT0AAAAAAC6DMG5NBDCSWBUV3W74HMXEZ6EXRTQ"
+db_geih <- read.csv(url)
 
 # 4. The gender earnings GAP ---------------------------------------------------------------
 #Unconditional wage gap
@@ -113,7 +114,7 @@ boot_se <- sd(boot_results$t)
 
 ## predict log inc 
 
-db_geih_1$predict_loginc <- predict(con_model, newdata = db_geih_1)
+db_geih$predict_loginc <- predict(con_model, newdata = db_geih)
 
 # Function to estimate peak age in each bootstrap sample 
 peak_age_boot <- function(data, indices, gender) {
@@ -140,8 +141,8 @@ peak_age_boot <- function(data, indices, gender) {
 
 # Run bootstrap for males and females
 B <- 1000
-boot_male <- boot(db_geih_1, statistic = peak_age_boot, R = B, gender = 0)
-boot_female <- boot(db_geih_1, statistic = peak_age_boot, R = B, gender = 1)
+boot_male <- boot(db_geih, statistic = peak_age_boot, R = B, gender = 0)
+boot_female <- boot(db_geih, statistic = peak_age_boot, R = B, gender = 1)
 
 # Get confidence intervals
 ci_male <- boot.ci(boot_male, type = "perc")
@@ -158,10 +159,10 @@ ci_male_low <- ci_male$percent[4]
 ci_male_up <- ci_male$percent[5]
 
 ## lablel var for better looking graph 
-db_geih_1$gender <- factor(db_geih_1$gender, labels = c("Female", "Male"))
+db_geih$gender <- factor(db_geih$gender, labels = c("Female", "Male"))
 
 ## Plot 
-ggplot(db_geih_1, aes(x = age, y = predict_loginc, color = gender)) +
+ggplot(db_geih, aes(x = age, y = predict_loginc, color = gender)) +
   geom_smooth(method = "loess", se = TRUE) + 
   
   # Confidence Interval (CI) for Peak Age (Male)

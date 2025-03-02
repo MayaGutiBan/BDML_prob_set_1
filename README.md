@@ -40,6 +40,7 @@ pacman::p_load(
   stats,      # Basic statistical functions
   boot        # Bootstrap analysis
 )
+```r
 
 ## Running the Scripts  
 There is no `main.R` script. Instead, run the scripts in the following order:  

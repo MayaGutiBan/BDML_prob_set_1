@@ -1,7 +1,7 @@
 ##########################################################
 #Problem set 1: predicting income
 #Authors: Grupo 12
-#Script description:
+#Script description: Web scrapping and preliminary data analysis
 
 ##########################################################
 

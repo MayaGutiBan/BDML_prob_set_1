@@ -1,3 +1,37 @@
+##########################################################
+#Problem set 1: predicting income
+#Authors: Grupo 12
+#Script description: Understanding the gender gap
+
+##########################################################
+
+# Clean the workspace -----------------------------------------------------
+rm(list=ls())
+cat("\014")
+local({r <- getOption("repos"); r["CRAN"] <- "http://cran.r-project.org"; options(repos=r)}) #set repo
+
+
+# Load Packages -----------------------------------------------------------
+if (!require("pacman")) install.packages("pacman")
+p_load(rio, # import/export data
+       tidyverse, # tidy-data
+       caret, # For predictive model assessment
+       gridExtra, # arrange plots
+       skimr, # summarize data 
+       stargazer, #model viz and descriptive statistics
+       rvest,
+       ggcorrplot,
+       ggplot2,
+       broom,
+       knitr,
+       mosaic,
+       stats,
+       boot
+) 
+
+# Cargar datos 
+db_geih <- read_rds("stores/clean_GEIH.rds")
+
 # 4. The gender earnings GAP ---------------------------------------------------------------
 #Unconditional wage gap
 # Fit the regression model
@@ -7,14 +41,20 @@ summary(uncon_model)
 # Tidy output with p-values and confidence intervals
 tidy(uncon_model)
 
+
 #Conditional wage gap model
 # 4bi. FWL
 con_model <- lm(log_ingtot ~ female + age + I(age^2) + cuentaPropia + estrato1 +
                   formal + maxEducLevel + parentesco_jhogar + tiempo_trabajando +
                   otro_trabajo + relab + sizeFirm + totalHoursWorked, data = db_geih)
 
-stargazer(con_model,type="text",digits=7)                
-                  
+stargazer(uncon_model, con_model, type = "text",
+          covariate.labels = c("Female", "Female"),  # Etiquetas personalizadas
+          keep = c("female", "Constant"),  # Solo muestra estas variables
+          title = "Tabla 3: Gender Wage Regression",
+          add.lines = list(c("Controles", "No", "Sí")),  # Agrega fila indicando si hay controles
+          out = "views/regresion_gender_wage.tex")
+
 # 4bi. FWL
 db_geih$female <- as.numeric(as.character(db_geih$female))  # Convert factor to numeric
 res_female <- lm(female ~ age + I(age^2) + cuentaPropia + estrato1 +
@@ -58,7 +98,7 @@ fwl_bootstrap <- function(data, indices) {
 
 # Run bootstrap with 1000 replications
 set.seed(424)  # For reproducibility
-boot_results <- boot(data = db_geih_1, statistic = fwl_bootstrap, R = 1000)
+boot_results <- boot(data = db_geih, statistic = fwl_bootstrap, R = 1000)
 
 # Get bootstrap estimate and standard error
 boot_results

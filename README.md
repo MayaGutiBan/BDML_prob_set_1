@@ -1,1 +1,62 @@
 # BDML_prob_set_1
+
+# Problem Set 1: Predicting Income  
+
+## Project Overview  
+Income prediction models play a crucial role in economic and public policy analysis, particularly in addressing issues related to tax evasion, social inequality, and fiscal sustainability. In this project, we construct a model of individual **hourly wages** using data from the 2018 **"Medición de Pobreza Monetaria y Desigualdad Report"**, which contains survey information from Bogotá’s **GEIH** dataset.  
+
+## Team Members  
+- Carlos Manjarres  
+- Juan Felipe Triana  
+- Sebastian Trujillo  
+- Maya Gutiérrez  
+
+## Repository Structure  
+The repository is organized as follows:  
+- **`documents/`** – Contains the final report of the project.  
+- **`scripts/`** – Includes all R scripts used in the analysis.  
+- **`stores/`** – Stores the dataset after web scraping and preprocessing.  
+- **`views/`** – Contains visual outputs (figures, tables, and model results).  
+
+## ⚙Setup Instructions  
+To run this project, you need R and the following packages:  
+
+```r
+# Load required libraries
+if (!require("pacman")) install.packages("pacman")
+pacman::p_load(
+  rio,        # Import/export data
+  tidyverse,  # Data wrangling & visualization
+  caret,      # Predictive model assessment
+  gridExtra,  # Arrange multiple plots
+  skimr,      # Summarize data
+  stargazer,  # Model visualization & descriptive stats
+  rvest,      # Web scraping
+  ggcorrplot, # Correlation plots
+  ggplot2,    # Data visualization
+  broom,      # Tidying model outputs
+  knitr,      # Dynamic report generation
+  mosaic,     # Statistical modeling
+  stats,      # Basic statistical functions
+  boot        # Bootstrap analysis
+)
+
+### Running the Scripts  
+There is no `main.R` script. Instead, run the scripts in the following order:  
+
+1️⃣ **`01Web_scraping_&_Data_analysis.R`** – Scrapes the dataset and performs a preliminary inspection of the data.  
+2️⃣ **`02Age_wage_profile.R`** – Estimates the age-wage profile and tests economic theory.  
+3️⃣ **`03Gender_GAP.R`** – Examines the gender wage gap using the Frisch-Waugh-Lovell (FWL) theorem.  
+4️⃣ **`04Predicting_earnings.R`** – Implements different models to predict income. 
+
+### Reproducibility
+
+This project is fully reproducible. To replicate the analysis:
+
+Clone this repository: git clone https://github.com/MayaGutiBan/BDML_prob_set_1.git
+cd BDML_prob_set_1
+
+### Key results
+
+
+

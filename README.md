@@ -18,7 +18,7 @@ The repository is organized as follows:
 - **`stores/`** – Stores the dataset after web scraping and preprocessing.  
 - **`views/`** – Contains visual outputs (figures, tables, and model results).  
 
-## ⚙Setup Instructions  
+## Setup Instructions  
 To run this project, you need R and the following packages:  
 
 ```r
@@ -40,6 +40,7 @@ pacman::p_load(
   stats,      # Basic statistical functions
   boot        # Bootstrap analysis
 )
+```r
 
 ### Running the Scripts  
 There is no `main.R` script. Instead, run the scripts in the following order:  

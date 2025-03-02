@@ -18,7 +18,7 @@ The repository is organized as follows:
 - **`stores/`** – Stores the dataset after web scraping and preprocessing.  
 - **`views/`** – Contains visual outputs (figures, tables, and model results).  
 
-## ⚙Setup Instructions  
+## Setup Instructions  
 To run this project, you need R and the following packages:  
 
 ```r
@@ -41,7 +41,7 @@ pacman::p_load(
   boot        # Bootstrap analysis
 )
 
-### Running the Scripts  
+## Running the Scripts  
 There is no `main.R` script. Instead, run the scripts in the following order:  
 
 1️ **`01Web_scraping_&_Data_analysis.R`** – Scrapes the dataset and performs a preliminary inspection of the data.  
@@ -49,14 +49,14 @@ There is no `main.R` script. Instead, run the scripts in the following order:
 3️ **`03Gender_GAP.R`** – Examines the gender wage gap using the Frisch-Waugh-Lovell (FWL) theorem.  
 4️ **`04Predicting_earnings.R`** – Implements different models to predict income. 
 
-### Reproducibility
+## Reproducibility
 
 This project is fully reproducible. To replicate the analysis:
 
 Clone this repository: git clone https://github.com/MayaGutiBan/BDML_prob_set_1.git
 cd BDML_prob_set_1
 
-### Key results: 
+## Key results: 
 
 
 

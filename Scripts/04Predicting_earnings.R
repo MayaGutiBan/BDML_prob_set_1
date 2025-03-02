@@ -87,8 +87,8 @@ hist(errors, main = "Distribution of Prediction Errors from
      log(total income)", xlab = "Error", col = "lightblue", breaks = 40)
 
 ## look for outliers 
-
-low <- quantile(errors, 0.001)
+## we look for individuals wich observed log_inctot is smaller than its predicted ones 
+low <- quantile(errors, 0.001) 
 
 
 ggplot(data = data.frame(errors), aes(x = errors)) +

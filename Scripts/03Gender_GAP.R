@@ -121,15 +121,34 @@ ci_male_up <- ci_male$percent[5]
 db_geih_1$gender <- factor(db_geih_1$gender, labels = c("Female", "Male"))
 
 ## Plot 
-ggplot(db_geih_1, aes(x = age, y = predict_loginc, color = gender,)) +
+ggplot(db_geih_1, aes(x = age, y = predict_loginc, color = gender)) +
   geom_smooth(method = "loess", se = TRUE) + 
-  geom_vline(xintercept = boot_male$t0, linetype = "dashed", color = "darkblue")+ ## peak age male
-  geom_vline(xintercept = boot_female$t0, linetype = "dashed", color = "red")+ ## pecl age female 
-  geom_ribbon(aes(xmin = ci_male_low, xmax = ci_male_up), width = 0.2, alpha = 0.5,color = "blue") + ##CI peak age male 
-  geom_ribbon(aes(xmin = ci_female_low, xmax = ci_female_up), width = 0.2, alpha = 0.4,color = "red") + ## CI peak age female
+  
+  # Confidence Interval (CI) for Peak Age (Male)
+  geom_ribbon(aes(xmin = ci_male_low, xmax = ci_male_up, fill = "Male CI"), alpha = 0.3) + 
+  # Confidence Interval (CI) for Peak Age (Female)
+  geom_ribbon(aes(xmin = ci_female_low, xmax = ci_female_up, fill = "Female CI"), alpha = 0.3) + 
+  
+  # Peak Age Vertical Lines
+  geom_vline(aes(xintercept = boot_male$t0, linetype = "Male Peak Age"), color = "blue", linewidth = 1) +
+  geom_vline(aes(xintercept = boot_female$t0, linetype = "Female Peak Age"), color = "red", linewidth = 1) +
+  
+  # Define Legends
+  scale_fill_manual(name = "Confidence Intervals", values = c("Male CI" = "blue", "Female CI" = "red")) +
+  scale_linetype_manual(name = "Predicted Peak Age", values = c("Male Peak Age" = "dashed", "Female Peak Age" = "dashed")) +
+  scale_color_manual(name = "Gender", values = c("Male" = "blue", "Female" = "red")) +
+  
   labs(title = "Predicted Age-Wage Profile by Gender",
        x = "Age",
-       y = "Log(Predicted Income)") 
+       y = "Log(Predicted Income)") +
+  theme_minimal() +
+  guides(
+    fill = guide_legend(order = 1), # Ensure CI is in legend
+    linetype = guide_legend(order = 2), # Ensure peak age lines are in legend
+    color = guide_legend(order = 3) # Gender legend
+  )
+
+
 
 
 

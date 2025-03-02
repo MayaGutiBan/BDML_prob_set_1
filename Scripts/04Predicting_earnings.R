@@ -62,6 +62,47 @@ for (i in seq_along(formulas)) {
 
 print(rmse_scores)
 
+### 5c Looking for tax evasion individuals with the best performing model
+
+set.seed(123)  # For reproducibility
+
+## create a training and test sample 
+trainIndex <- createDataPartition(db_geih$log_ingtot, p = 0.8, list = FALSE)
+train_data <- db_geih[trainIndex, ]
+test_data <- db_geih[-trainIndex, ]
+
+# we choose the best performing model 
+form_7 = lm(log_ingtot ~ female + age + I(age^2) + cuentaPropia + estrato1 +
+              formal + maxEducLevel + parentesco_jhogar + tiempo_trabajando +
+              otro_trabajo + relab + sizeFirm + totalHoursWorked, data = train_data )
+
+## make predictions on test set 
+predictions <- predict(form_7, newdata = test_data)
+
+## compute errors 
+errors <- test_data$log_ingtot - predictions
+
+## show distribution of erros
+hist(errors, main = "Distribution of Prediction Errors from 
+     log(total income)", xlab = "Error", col = "lightblue", breaks = 40)
+
+## look for outliers 
+
+low <- quantile(errors, 0.001)
+
+
+ggplot(data = data.frame(errors), aes(x = errors)) +
+  geom_histogram(binwidth = 0.2, fill = "lightblue", color = "black") +
+  labs(title = "Distribution of Prediction Errors",
+       x = "Error",
+       y = "Frequency") +
+  theme_minimal() + 
+  geom_vline(aes(xintercept = low, linetype = "0.1% percentile"), color = "lightblue", linewidth = 1) 
+
+
+
+
+
 #5d. LOOCV
 form_4 = log_ingtot ~ female + age + I(age^2) + cuentaPropia + estrato1 +
   formal + maxEducLevel + parentesco_jhogar + tiempo_trabajando +

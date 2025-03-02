@@ -68,7 +68,9 @@ db_geih <- all_tables %>%
   filter(age>=18 & ocu==1)
 
 # Guardar data limpia
-write.csv(db_geih,"clean_GEIH.csv",row.names = F)
+dir.create("stores", showWarnings = FALSE)  # Crea la carpeta si no existe
+write.csv(db_geih, "stores/clean_GEIH.csv", row.names = FALSE)
+list.files("stores")
 
 #Description variables- age, sex, education, state, race, occupation, industry,
 
@@ -80,7 +82,7 @@ write.csv(db_geih,"clean_GEIH.csv",row.names = F)
 #y_salary_m, y_salary_m_hu, y_ingLab_m, y_primaServicios_m, y_ingLab_m_ha, y_total_m, y_total_m_ha
 
 # Cargar datos 
-db_geih <- read_csv("clean_GEIH.csv")
+db_geih <- read.csv("stores/clean_GEIH.csv")
 head(db_geih, 5)
 
 variables<- c("age", "cuentaPropia", "estrato1", "formal", "ingtot", "maxEducLevel", "p6050", "p6426", "p7040", "relab", "sex", "sizeFirm", 
@@ -111,7 +113,9 @@ outliers <- db_geih_1 %>% filter(totalHoursWorked > 120)
 low <- quantile(db_geih_1$totalHoursWorked, 0.01)
 up <- quantile(db_geih_1$totalHoursWorked, 0.99)
 
-ggplot(data = db_geih_1, aes(y = totalHoursWorked, x = "")) +
+dir.create("views", showWarnings = FALSE)  # Crea la carpeta si no existe
+
+boxplot_plot <- ggplot(data = db_geih_1, aes(y = totalHoursWorked, x = "")) +
   theme_bw() +
   geom_boxplot(outlier.shape = NA) +  # Hide outliers to avoid overlap
   geom_jitter(width = 0.2, alpha = 0.4, color = "gray") +  # Add jittered points
@@ -120,6 +124,9 @@ ggplot(data = db_geih_1, aes(y = totalHoursWorked, x = "")) +
   annotate("text", x = 1, y = low, label = paste0("Low: ", round(low,1)), vjust = -1, color = "blue") +
   annotate("text", x = 1, y = up, label = paste0("Up: ", round(up,1)), vjust = -1, color = "blue") +
   labs(y = "Total Hours Worked", x = "", title = "Boxplot of Total Hours Worked with 1st & 99th Percentile")
+
+# Guardar la imagen en "views"
+ggsave("views/boxplot_total_hours_worked.png", plot = boxplot_plot, width = 8, height = 6, dpi = 300)
 
 
 variables_categoricas <- c("cuentaPropia", "estrato1", "formal", "maxEducLevel", "parentesco_jhogar", "otro_trabajo", "relab", "gender", "female", "H_Head", "sizeFirm")
@@ -172,7 +179,12 @@ e <- create_grouped_boxplot(db_geih_1, "cuentaPropia", "log_ingtot", "Self-Emplo
 f <- create_grouped_boxplot(db_geih_1, "maxEducLevel", "log_ingtot", "Max Education Level", show_legend = TRUE)
 
 # Arrange all plots in a grid
-grid.arrange(a, b, c, d, e, f, ncol = 3)
+
+arrange_plot <- grid.arrange(a, b, c, d, e, f, ncol = 3)
+
+# Guardar la imagen
+ggsave("views/arrange_1.png", plot = arrange_plot, width = 12, height = 8, dpi = 300)
+
 
 # Histograms Hours, age, income
 a<- ggplot(db_geih_1, aes(x = totalHoursWorked )) +
@@ -190,7 +202,8 @@ c <- ggplot(db_geih_1, aes(x = log_ingtot)) +
   labs(x = "Total Income (log)", y = "N. Obs") +
   theme_bw() 
 
-grid.arrange(a,b,c, ncol = 3)
+arrange_plot <- grid.arrange(a,b,c, ncol = 3)
+ggsave("views/arrange_2.png", plot = arrange_plot, width = 12, height = 8, dpi = 300)
 
 
 #Scatterplot matrix- Convert data to long format for easy plotting
@@ -200,12 +213,13 @@ df_long <- db_geih_1 %>%
                values_to = "Value")
 
 # Plot multiple scatter plots
-ggplot(df_long, aes(x = Value, y = log_ingtot)) +
+scatter_1 <- ggplot(df_long, aes(x = Value, y = log_ingtot)) +
   geom_point(alpha = 0.5, color = "blue") +
   facet_wrap(~ Variable, scales = "free_x") +
   theme_minimal() +
   labs(title = "Total Income vs Other Variables", x = "Variable Value", y = "Total Income (log)")
 
+ggsave("views/totalincome_othervar.png", plot = scatter_1, width = 8, height = 6, dpi = 300)
 
 # Compute a correlation matrix and visualize 
 cor_matrix <- db_geih_1 %>%
@@ -213,15 +227,18 @@ cor_matrix <- db_geih_1 %>%
   cor(method = "spearman", use = "pairwise.complete.obs") %>%  # Handle NAs pairwise
   round(1)
 
-ggcorrplot(cor_matrix, type = "lower", lab = TRUE) +
+corr_plot <- ggcorrplot(cor_matrix, type = "lower", lab = TRUE) +
   theme_minimal() +
   labs(x = "", y = "")
+
+ggsave("views/corr_plot.png", plot = corr_plot, width = 8, height = 6, dpi = 300)
 
 M <- db_geih_1 %>%
   select(all_of(c("log_ingtot", "age", "tiempo_trabajando", "totalHoursWorked")))
 
 cor_matrix <- cor(M, use = "pairwise.complete.obs")  # Compute correlation matrix
-corrplot(cor_matrix, method = "circle")
+corr_plot_2 <- ggcorrplot(cor_matrix, method = "circle")
+ggsave("views/corr_plot_2.png", plot = corr_plot_2, width = 8, height = 6, dpi = 300)
 
 # Guardar data limpia
-write_rds(db_geih_1,"clean_GEIH.rds")
+write_rds(db_geih_1,"stores/clean_GEIH.rds")

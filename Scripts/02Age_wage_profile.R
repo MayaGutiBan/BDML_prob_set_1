@@ -26,7 +26,14 @@ p_load(rio, # import/export data
        knitr,
        mosaic,
        stats,
-       boot
+       boot,
+       ggbeeswarm,
+       ggdist,
+       gghalves,
+       moments,
+       corrplot,
+       visdat,
+       kabbleExtra
 ) 
 
 # Cargar datos 

@@ -26,7 +26,14 @@ p_load(rio, # import/export data
        knitr,
        mosaic,
        stats,
-       boot
+       boot,
+       ggbeeswarm,
+       ggdist,
+       gghalves,
+       moments,
+       corrplot,
+       visdat,
+       kabbleExtra
 ) 
 
 # Cargar datos 
@@ -45,33 +52,56 @@ tidy(uncon_model)
 # 4bi. FWL
 con_model <- lm(log_ingtot ~ female + age + I(age^2) + cuentaPropia + estrato1 +
                   formal + maxEducLevel + parentesco_jhogar + tiempo_trabajando +
-                  otro_trabajo + relab + sizeFirm + totalHoursWorked, data = db_geih)
-
-stargazer(uncon_model, con_model, type = "text",
-          covariate.labels = c("Female", "Female"),  # Etiquetas personalizadas
-          keep = c("female", "Constant"),  # Solo muestra estas variables
-          title = "Tabla 3: Gender Wage Regression",
-          add.lines = list(c("Controles", "No", "Sí")),  # Agrega fila indicando si hay controles
-          out = "views/regresion_gender_wage.tex")
-
+                  otro_trabajo + relab + sizeFirm + totalHoursWorked +
+                  oficio + otro_ingreso + nmenores, data = db_geih)
+                  
+stargazer(uncon_model, con_model,
+          title = "Gender wage regression",
+          type = "text",
+          style = "aer",
+          header = FALSE,
+          column.labels = c("Unconditional Model", "Conditional Model"),
+          omit = c("age", "I(age^2)", "cuentaPropia", "estrato1",
+                  "formal", "maxEducLevel", "parentesco_jhogar", "tiempo_trabajando",
+                  "otro_trabajo", "relab", "sizeFirm", "totalHoursWorked",
+                  "oficio", "otro_ingreso", "nmenores"),
+          add.lines = list(c("Controls", "NO", "YES")),
+          notes.align = "l",
+          notes.append = TRUE,
+          notes = "Controls for age, education, experience, sector, job title, hours worked, firm size and children.",
+          out = "reg_genderwage.tex") 
 # 4bi. FWL
 db_geih$female <- as.numeric(as.character(db_geih$female))  # Convert factor to numeric
 res_female <- lm(female ~ age + I(age^2) + cuentaPropia + estrato1 +
                    formal + maxEducLevel + parentesco_jhogar + tiempo_trabajando +
-                   otro_trabajo + relab + sizeFirm + totalHoursWorked, data = db_geih)$residuals
+                   otro_trabajo + relab + sizeFirm + totalHoursWorked + oficio + otro_ingreso + nmenores, data = db_geih)$residuals
 #This isolates the variation in female that is not explained by the other covariates.
 
 res_log_ingtot <- lm(log_ingtot ~ age + I(age^2) + cuentaPropia + estrato1 +
                        formal + maxEducLevel + parentesco_jhogar + tiempo_trabajando +
-                       otro_trabajo + relab + sizeFirm + totalHoursWorked, 
+                       otro_trabajo + relab + sizeFirm + totalHoursWorked + oficio + otro_ingreso + nmenores, 
                      data = db_geih)$residuals
 #This isolates the variation in log_ingtot that is not explained by the same set of independent variables.
 
 fwl_model <- lm(res_log_ingtot ~ res_female)
 summary(fwl_model)
 
-stargazer(con_model,fwl_model,type="text",digits=7)
-
+stargazer(con_model,fwl_model,
+          title = "Gender wage regression using FWL theorem",
+          type = "text",
+          style = "aer",
+          header = FALSE,
+          column.labels = c("Conditional Model", "Conditional model with FWL"),
+          omit = c("age", "I(age^2)", "cuentaPropia", "estrato1",
+                  "formal", "maxEducLevel", "parentesco_jhogar", "tiempo_trabajando",
+                  "otro_trabajo", "relab", "sizeFirm", "totalHoursWorked",
+                  "oficio", "otro_ingreso", "nmenores"),
+          add.lines = list(c("Controls", "NO", "YES")),
+          notes.align = "l",
+          notes.append = TRUE,
+          notes = "Controls for age, education, experience, sector, job title, hours worked, firm size and children.",
+          out = "reg_FWLgenderwage.tex"
+          ) 
 ## 4bii. FWL with bootstrap
 
 # Load necessary library

@@ -21,19 +21,19 @@ The repository is organized as follows:
 ## Setup Instructions  
 To run this project, you need R and the following packages:  
 
-tidyverse – Data wrangling & visualization
-caret – Predictive model assessment
-gridExtra – Arrange multiple plots
-skimr – Summarize data
-stargazer – Model visualization & descriptive statistics
-rvest – Web scraping
-ggcorrplot – Correlation plots
-ggplot2 – Data visualization
-broom – Tidying model outputs
-knitr – Dynamic report generation
-mosaic – Statistical modeling
-stats – Basic statistical functions
-boot – Bootstrap analysis
+- **`tidyverse`** – Data wrangling & visualization
+- **`caret`** – Predictive model assessment
+- **`gridExtra`** – Arrange multiple plots
+- **`skimr`** – Summarize data
+- **`stargazer`** – Model visualization & descriptive statistics
+- **`rvest`** – Web scraping
+- **`ggcorrplot`** – Correlation plots
+- **`ggplot2`** – Data visualization
+- **`broom`** – Tidying model outputs
+- **`knitr`** – Dynamic report generation
+- **`mosaic`** – Statistical modeling
+- **`stats`** – Basic statistical functions
+- **`boot`** – Bootstrap analysis
 
 
 

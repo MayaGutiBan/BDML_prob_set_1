@@ -73,92 +73,141 @@ ggsave("views/train_test.png", plot = train_test, width = 8, height = 6, dpi = 3
 
 # Define different model formulas
 formulas <- list(
-  form_1 = log_ingtot  ~  age + female, #simple linear, categorical
+  form_1 = log_ingtot  ~  female, #simple linear, categorical
   form_2 = log_ingtot  ~  age + I(age^2),  # Adding non-linearity from point 3
-  form_3 = log_ingtot ~ female,  # Non conditional from point 4
-  form_4 = log_ingtot ~ female + age + I(age^2) + cuentaPropia + estrato1 +
+  form_3 = log_ingtot ~ female + age + I(age^2) + cuentaPropia + estrato1 +
     formal + maxEducLevel + parentesco_jhogar + tiempo_trabajando +
-    otro_trabajo + relab + sizeFirm + totalHoursWorked, #conditional model from point 4
-  form_5 = log_ingtot  ~  age + I(age^2) + female + totalHoursWorked +I(totalHoursWorked^2), ##Adding non-linearity 
-  form_6 = log_ingtot ~ age + I(age^2) + female + totalHoursWorked*sizeFirm,
-  form_7 = log_ingtot ~ female + age + I(age^2) + cuentaPropia + estrato1 +
+    otro_trabajo + relab + sizeFirm + totalHoursWorked + oficio + otro_ingreso + nmenores, #conditional model from point 4
+  form_4 = log_ingtot  ~  female * age + I(age^2) + cuentaPropia + cuentaPropia * female + 
+    estrato1 + estrato1*female + formal + maxEducLevel + parentesco_jhogar + tiempo_trabajando + 
+    otro_trabajo + relab + sizeFirm + totalHoursWorked + oficio + otro_ingreso + nmenores, # Interaction effect
+  form_5 = log_ingtot ~ female + age + I(age^2) + I(age^3) + I(age^4) + cuentaPropia + estrato1 +
     formal + maxEducLevel + parentesco_jhogar + tiempo_trabajando +
-    otro_trabajo + relab + sizeFirm + totalHoursWorked + totalHoursWorked*sizeFirm
-) # Interaction effect
+    otro_trabajo + relab + sizeFirm + totalHoursWorked + oficio + otro_ingreso + nmenores,
+  form_6= log_ingtot ~ female + log(age) + cuentaPropia + estrato1 +
+    formal + maxEducLevel + parentesco_jhogar + tiempo_trabajando +
+    otro_trabajo + relab + sizeFirm + log(totalHoursWorked) + oficio + otro_ingreso + nmenores
+)
+
+models <- lapply(formulas, function(f) lm(f, data = db_geih))
 
 
 # Initialize a list to store RMSE scores
-rmse_scores <- data.frame(Model = character(), RMSE = numeric(), stringsAsFactors = FALSE)
+rmse_values <- numeric(length(formulas))
 
-db_geih <- db_geih %>% 
-  mutate(maxEducLevel = as.factor(round(as.numeric(as.character(maxEducLevel)))))
-
-# Loop through each model, predict, compute RMSE and store results
+# Loop through each formula
 for (i in seq_along(formulas)) {
   model <- lm(formulas[[i]], data = training)
-  predictions <- predict(model, testing)
-  score <- RMSE(predictions, testing$log_ingtot)
-  rmse_scores <- rbind(rmse_scores, data.frame(Model = names(formulas)[i], RMSE = score))
+  predictions <- predict(model, newdata = testing)
+  rmse_values[i] <- RMSE(predictions, testing$log_ingtot)
+  cat("RMSE for model", names(formulas)[i], ":", rmse_values[i], "\n")
 }
 
-print(rmse_scores)
+rmse_values_rounded <- round(rmse_values, 3)
 
-### 5c Looking for tax evasion individuals with the best performing model
+stargazer(models,
+          title = "Model comparison",
+          type = "text",
+          style = "aer",
+          header = FALSE,
+          omit = c("age", "I(age^2)", "cuentaPropia", "estrato1",
+                   "formal", "maxEducLevel", "parentesco_jhogar", "tiempo_trabajando",
+                   "otro_trabajo", "relab", "sizeFirm", "totalHoursWorked",
+                   "oficio", "otro_ingreso", "nmenores"),
+          add.lines = list(
+            c("Controls", "NO", "NO", "YES", "YES", "YES", "YES"),
+            c("Test set RMSE", rmse_values_rounded),
+            c("Degrees of Freedom", "df = 1; 16540", "df = 2; 16539", "df = 119; 16422", 
+              "df = 126; 16415", "df = 121; 16420", "df = 118; 16423")
+          ),
+          notes.align = "l",
+          notes.append = TRUE,
+          notes = "Controls for age, education, experience, sector, job title, hours worked, firm size and children.",
+          column.sep.width = "1pt", # Reduce space between columns
+          font.size = "small", # Reduce font size
+          single.row = TRUE, # Combine coefficients and standard errors into one row
+          out = "models.tex"
+)
 
-set.seed(123)  # For reproducibility
+#Prediction errors
+# Fit Model 6
+model_6 <- lm(log_ingtot ~ female + log(age) + cuentaPropia + estrato1 +
+                formal + maxEducLevel + parentesco_jhogar + tiempo_trabajando +
+                otro_trabajo + relab + sizeFirm + log(totalHoursWorked) + oficio + 
+                otro_ingreso + nmenores, data = training)
 
-## create a training and test sample 
-trainIndex <- createDataPartition(db_geih$log_ingtot, p = 0.8, list = FALSE)
-train_data <- db_geih[trainIndex, ]
-test_data <- db_geih[-trainIndex, ]
+prediction_errors <- testing$log_ingtot - predictions
 
-# we choose the best performing model 
-form_7 = lm(log_ingtot ~ female + age + I(age^2) + cuentaPropia + estrato1 +
-              formal + maxEducLevel + parentesco_jhogar + tiempo_trabajando +
-              otro_trabajo + relab + sizeFirm + totalHoursWorked, data = train_data )
+# Define outliers as observations with errors greater than ±2 standard deviations
+outlier_threshold <- 2 * sd(prediction_errors)
+outliers <- abs(prediction_errors) > outlier_threshold
 
-## make predictions on test set 
-predictions <- predict(form_7, newdata = test_data)
+# Extract outlier data
+outlier_data <- testing[outliers, ]
 
-## compute errors 
-errors <- test_data$log_ingtot - predictions
-
-## show distribution of erros
-df_errors <- data.frame(errors = errors)
-
-# Crear el histograma con ggplot
-dist_errors <- ggplot(df_errors, aes(x = errors)) +
-  geom_histogram(fill = "lightblue", bins = 40, color = "black") +
-  labs(title = "Distribution of Prediction Errors from log(total income)",
-       x = "Error", 
-       y = "Frequency") +
-  theme_bw()
-
-# Guardar la imagen en la carpeta views
-ggsave("views/dist_errors.png", plot = dist_errors, width = 8, height = 6, dpi = 300)
+# Add prediction errors to the outlier data
+outlier_data$prediction_error <- prediction_errors[outliers]
+outlier_data$predictions <- predictions[outliers]
 
 
-## look for outliers 
-## we look for individuals wich observed log_inctot is smaller than its predicted ones 
-low <- quantile(errors, 0.001) 
-
-
-dist_errors_q1 <- ggplot(data = data.frame(errors), aes(x = errors)) +
-  geom_histogram(binwidth = 0.2, fill = "lightblue", color = "black") +
+ggplot(data.frame(prediction_errors), aes(x = prediction_errors)) +
+  geom_histogram(bins = 50, fill = "blue", color = "black") +
+  geom_vline(xintercept = c(-outlier_threshold, outlier_threshold), color = "red", linetype = "dashed") +
   labs(title = "Distribution of Prediction Errors",
-       x = "Error",
+       x = "Prediction Error",
        y = "Frequency") +
-  theme_minimal() + 
-  geom_vline(aes(xintercept = low, linetype = "0.1% percentile"), color = "lightblue", linewidth = 1) 
-
-ggsave("views/dist_errors_q1.png", plot = dist_errors_q1, width = 8, height = 6, dpi = 300)
+  theme_minimal()
+ggsave("outlier_hist.pdf")
 
 
+# Compare the distribution of error terms of a specific variable (e.g., age)
+# Define the function to create density plots
+create_density_plot <- function(data, outlier_data, x_var, x_label, show_legend = FALSE) {
+  p <- ggplot() +
+    geom_density(data = data, aes(x = .data[[x_var]], color = "Full Test Set"), size = 1) +
+    geom_density(data = outlier_data, aes(x = .data[[x_var]], color = "Outliers"), size = 1) +
+    scale_color_manual(name = "Group", values = c("Full Test Set" = "blue", "Outliers" = "red")) +
+    theme_minimal()
+  
+  # Suppress the legend if show_legend is FALSE
+  if (!show_legend) {
+    p <- p + theme(legend.position = "none")
+  }
+  
+  return(p)
+}
+
+a <- create_density_plot(testing, outlier_data, "tiempo_trabajando", "Experiencia")
+b <- create_density_plot(testing, outlier_data, "age", "Age")
+c <- create_density_plot(testing, outlier_data, "totalHoursWorked", "Total Hours Worked", show_legend = TRUE)
+p_grid <- grid.arrange(a, b, c, ncol = 3)
+ggsave("Test_var_comparison.pdf", plot = p_grid, width = 8.27)  # A4 size in inches
+
+
+outlier_summary <- outlier_data[, c("log_ingtot", "female", "age", "maxEducLevel", "totalHoursWorked", "prediction_error")]
+
+# Scatter plot of actual vs. predicted values, highlighting outliers
+ggplot() +
+  geom_point(data = testing, aes(x = log_ingtot, y = predictions, color = "Normal"), alpha = 0.5) +
+  geom_point(data = outlier_data, aes(x = log_ingtot, y = predictions, color = "Outliers"), size = 2) +
+  geom_abline(slope = 1, intercept = 0, linetype = "dashed", color = "red") +
+  labs(title = "Actual vs. Predicted log_ingtot",
+       x = "Actual log_ingtot",
+       y = "Predicted log_ingtot") +
+  scale_color_manual(name = "Group", values = c("Normal" = "cornflowerblue", "Outliers" = "brown1")) +
+  theme_minimal()
+ggsave("outlier_dist.pdf")
+
+stargazer(outlier_data,
+          type = "text")
 
 #5d. LOOCV
-form_4 = log_ingtot ~ female + age + I(age^2) + cuentaPropia + estrato1 +
+form_5 = log_ingtot ~ female + age + I(age^2) + I(age^3) + I(age^4) + cuentaPropia + estrato1 +
   formal + maxEducLevel + parentesco_jhogar + tiempo_trabajando +
-  otro_trabajo + relab + sizeFirm + totalHoursWorked
+  otro_trabajo + relab + sizeFirm + totalHoursWorked + oficio + otro_ingreso + nmenores
+form_6= log_ingtot ~ female + log(age) + cuentaPropia + estrato1 +
+  formal + maxEducLevel + parentesco_jhogar + tiempo_trabajando +
+  otro_trabajo + relab + sizeFirm + log(totalHoursWorked) + oficio + otro_ingreso + nmenores
 
 ctrl <- trainControl(
   method = "LOOCV") ## input the method Leave One Out Cross Validation
@@ -172,7 +221,7 @@ cat("Starting LOOCV training with", n_obs, "iterations...\n")
 
 # Train model with progress printing
 ctrl$verboseIter <- TRUE  # Enable progress printing
-modelo4d <- train(form_4,
+modelo4d <- train(form_5,
                   data = db_geih,
                   method = 'lm', 
                   trControl = ctrl)
@@ -182,3 +231,68 @@ end_time <- Sys.time()
 training_time <- difftime(end_time, start_time, units = "mins")
 cat("\nLOOCV training completed in:", round(training_time, 2), "minutes\n")
 cat("Average time per fold:", round(training_time/n_obs, 4), "minutes\n")
+
+#save validation set RMSE
+validation_rmse_model_5 <- modelo4d$results$RMSE
+
+##Levarage calculation
+# Calculate Cook's distance
+cooks_distance_5 <- cooks.distance(model_5)
+
+# Identify influential observations
+influential_obs_5 <- which(cooks_distance_5 > 4 / nrow(training)) # Threshold for Cook's distance
+
+###LOOCV modelo 6
+ctrl <- trainControl(
+  method = "LOOCV") ## input the method Leave One Out Cross Validation
+
+# Start timing
+start_time <- Sys.time()
+
+# Get total number of observations for progress tracking
+n_obs <- nrow(db_geih)
+cat("Starting LOOCV training with", n_obs, "iterations...\n")
+
+# Train model with progress printing
+ctrl$verboseIter <- TRUE  # Enable progress printing
+modelo6d <- train(form_6,
+                  data = db_geih,
+                  method = 'lm', 
+                  trControl = ctrl)
+
+# Calculate and display timing
+end_time <- Sys.time()
+training_time <- difftime(end_time, start_time, units = "mins")
+cat("\nLOOCV training completed in:", round(training_time, 2), "minutes\n")
+cat("Average time per fold:", round(training_time/n_obs, 4), "minutes\n")
+
+##Levarage calculation
+# Calculate Cook's distance
+cooks_distance_6 <- cooks.distance(model_6)
+
+# Identify influential observations
+influential_obs_6 <- which(cooks_distance_6 > 4 / nrow(training)) # Threshold for Cook's distance
+
+
+#save validation set RMSE
+validation_rmse_model_6 <- modelo6d$results$RMSE
+
+test_error_model_5 <- RMSE(predict(model_5, newdata = testing), testing$log_ingtot)
+test_error_model_6 <- RMSE(predict(model_6, newdata = testing), testing$log_ingtot)
+
+# Create a comparison table
+comparison_table <- data.frame(
+  Metric = c("Test RMSE", "Validation Set RMSE (LOOCV)", "Number of Influential Observations"),
+  Model_5 = c(test_error_model_5, validation_rmse_model_5, length(influential_obs_5)),
+  Model_6 = c(test_error_model_6, validation_rmse_model_6, length(influential_obs_6))
+)
+
+performance <- kable(comparison_table, 
+                     caption = "Comparison of Model Performance", 
+                     col.names = c("Metric", "Model 1", "Model 2"), 
+                     format = "latex", 
+                     booktabs = TRUE, 
+                     align = c("l", "r", "r"), 
+                     digits = 7) 
+
+save_kable(performance, "model_performance.tex")

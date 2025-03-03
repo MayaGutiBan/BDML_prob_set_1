@@ -46,17 +46,12 @@ pacman::p_load(
 ## Running the Scripts  
 There is no `main.R` script. Instead, run the scripts in the following order:  
 
-<<<<<<< HEAD
+
 1 **`01Web_scraping_&_Data_analysis.R`** – Scrapes the dataset and performs a preliminary inspection of the data.  ⃣
 2 **`02Age_wage_profile.R`** – Estimates the age-wage profile and tests economic theory.  
 3 **`03Gender_GAP.R`** – Examines the gender wage gap using the Frisch-Waugh-Lovell (FWL) theorem.  
 4 **`04Predicting_earnings.R`** – Implements different models to predict income. 
-=======
-1️ **`01Web_scraping_&_Data_analysis.R`** – Scrapes the dataset and performs a preliminary inspection of the data.  
-2️ **`02Age_wage_profile.R`** – Estimates the age-wage profile and tests economic theory.  
-3️ **`03Gender_GAP.R`** – Examines the gender wage gap using the Frisch-Waugh-Lovell (FWL) theorem.  
-4️ **`04Predicting_earnings.R`** – Implements different models to predict income. 
->>>>>>> f72b14a6fbd8508f44b57ef1292eac3cd9ecdde5
+
 
 ## Reproducibility
 

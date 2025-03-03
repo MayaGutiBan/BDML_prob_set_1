@@ -43,8 +43,6 @@ pacman::p_load(
 ```r
 
 
-```r
-
 ## Running the Scripts  
 There is no `main.R` script. Instead, run the scripts in the following order:  
 
@@ -65,7 +63,6 @@ There is no `main.R` script. Instead, run the scripts in the following order:
 This project is fully reproducible. To replicate the analysis:
 
 Clone this repository: git clone https://github.com/MayaGutiBan/BDML_prob_set_1.git
-cd BDML_prob_set_1
 
 ## Key results: 
 

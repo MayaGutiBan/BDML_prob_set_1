@@ -40,6 +40,7 @@ pacman::p_load(
   stats,      # Basic statistical functions
   boot        # Bootstrap analysis
 )
+```r
 
 
 ```r

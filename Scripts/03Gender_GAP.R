@@ -30,9 +30,7 @@ p_load(rio, # import/export data
 ) 
 
 # Cargar datos 
-url <- "https://raw.githubusercontent.com/MayaGutiBan/BDML_prob_set_1/refs/heads/main/stores/GEIH.csv?token=GHSAT0AAAAAAC6DMG5NBDCSWBUV3W74HMXEZ6EXRTQ"
-db_geih <- read.csv(url)
-
+db_geih <- read_rds("stores/clean_GEIH.rds")
 # 4. The gender earnings GAP ---------------------------------------------------------------
 #Unconditional wage gap
 # Fit the regression model

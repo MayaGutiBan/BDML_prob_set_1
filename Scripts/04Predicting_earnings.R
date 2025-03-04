@@ -33,6 +33,7 @@ p_load(rio, # import/export data
 db_geih <- read_rds("stores/GEIH_final.rds")
 
 # 5. Predicting earnings ---------------------------------------------------------------
+db_geih_num <- data.frame(lapply(db_geih, function(x) as.numeric(as.character(x))))
 
 #Testing and training
 set.seed(123)  # Set set for replicability purposes 

@@ -116,8 +116,6 @@ stargazer(as.data.frame(db_geih[, c("clase", "depto")]), type = "text", summary 
 #Clase y depto no tienen variabilidad entonces se eliminan
 variables_categoricas <- c("cuentaPropia", "estrato1", "formal", "maxEducLevel", "parentesco_jhogar", "otro_trabajo", "relab", "gender", "female", 
                            "H_Head", "sizeFirm", "oficio", "college", "regSalud", "otro_ingreso")
-db_geih_1 <- db_geih_1 %>%
-  mutate(across(all_of(variables_categoricas), as.factor))
 
 variables_total <- c("age", "cuentaPropia", "estrato1", "formal", "ingtot", "maxEducLevel", "p6050", "p6426", "p7040", "p7495", "relab", "sex", "sizeFirm", 
               "totalHoursWorked", "nmenores", "college", "regSalud", "oficio")
@@ -133,6 +131,9 @@ db_geih_1 <- db_geih %>%
           gender = "sex") %>% 
   mutate( female = 1-gender, ## 1 if female
           H_Head = ifelse( parentesco_jhogar== 1, 1, 0)) #Household head
+
+db_geih_1 <- db_geih_1 %>%
+  mutate(across(all_of(variables_categoricas), as.factor))
           
 # Clean data ---------------------------------------------------------------
 

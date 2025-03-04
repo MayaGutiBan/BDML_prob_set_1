@@ -30,7 +30,7 @@ p_load(rio, # import/export data
 ) 
 
 # Cargar datos 
-db_geih <- read_rds("stores/clean_GEIH.rds")
+db_geih <- read_rds("stores/GEIH_final.rds")
 
 # 5. Predicting earnings ---------------------------------------------------------------
 

@@ -44,10 +44,10 @@ inTrain <- createDataPartition(
   list = FALSE
 )
 
-training <- db_geih %>% 
+training <- db_geih_num %>% 
   filter(row_number() %in% inTrain)
 
-testing  <- db_geih %>% 
+testing  <- db_geih_num %>% 
   filter(!row_number() %in% inTrain)
 
 # Create data for visualization

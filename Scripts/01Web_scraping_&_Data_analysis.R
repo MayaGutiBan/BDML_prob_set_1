@@ -101,7 +101,14 @@ db_geih <- read.csv("stores/clean_GEIH.csv")
 head(db_geih, 5)
 
 variables <- c("age", "cuentaPropia", "estrato1", "formal", "ingtot", "maxEducLevel", "p6050", "p6426", "p7040", "p7495", "relab", "sex", "sizeFirm", 
-              "totalHoursWorked", "nmenores", "oficio", "college", "regSalud","y_salary_m", "y_salary_m_hu", "y_ingLab_m", "y_primaServicios_m", "y_ingLab_m_ha", "y_total_m", "y_total_m_ha")
+              "totalHoursWorked", "nmenores", "oficio", "college", "regSalud")
+
+variables_ing <- c("ingtot", "y_salary_m", "y_salary_m_hu", "y_ingLab_m", "y_primaServicios_m", "y_ingLab_m_ha", "y_total_m", "y_total_m_ha")
+
+db_geih_ing <- db_geih %>%  
+  select(variables_ing)
+
+vis_dat(db_geih_ing)
 
 
 stargazer(as.data.frame(db_geih[, c("clase", "depto")]), type = "text", summary = TRUE)
@@ -119,6 +126,7 @@ db_geih_1 <- db_geih %>%
   rename( parentesco_jhogar = "p6050",
           tiempo_trabajando = "p6426", # la variable esta en meses
           otro_trabajo = "p7040",
+          otro_ingreso = "p7495",
           gender = "sex") %>% 
   mutate( female = 1-gender, ## 1 if female
           H_Head = ifelse( parentesco_jhogar== 1, 1, 0)) #Household head

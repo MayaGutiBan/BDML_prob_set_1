@@ -119,9 +119,12 @@ variables_categoricas <- c("cuentaPropia", "estrato1", "formal", "maxEducLevel",
 db_geih_1 <- db_geih_1 %>%
   mutate(across(all_of(variables_categoricas), as.factor))
 
+variables_total <- c("age", "cuentaPropia", "estrato1", "formal", "ingtot", "maxEducLevel", "p6050", "p6426", "p7040", "p7495", "relab", "sex", "sizeFirm", 
+              "totalHoursWorked", "nmenores", "college", "regSalud", "oficio")
+
 # Inputacion medias de variables numericas, renombrar y crear variables
 db_geih_1 <- db_geih %>%  
-  select(variables) %>% 
+  select(variables_total) %>% 
   mutate(across(where(is.numeric), ~ replace_na(., ifelse(is.integer(.), as.integer(median(., na.rm = TRUE)), mean(., na.rm = TRUE))))) %>% 
   rename( parentesco_jhogar = "p6050",
           tiempo_trabajando = "p6426", # la variable esta en meses

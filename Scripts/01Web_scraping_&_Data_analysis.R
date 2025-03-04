@@ -169,24 +169,51 @@ db_geih_1 <- db_geih_1 %>%
 write_rds(db_geih_1,"stores/GEIH_final.rds")
 
 ### DATA VISUALIZATION ---------
-
 # Function to create a single boxplot
 create_boxplot <- function(data, y_var, y_label) {
   ggplot(data, aes(y = !!sym(y_var), x = "")) +
-    geom_boxplot() +
-    theme_bw() +
     ylab(y_label) +
-    xlab("")
+    xlab("")+
+    ggdist::stat_halfeye(
+      adjust = .5, 
+      width = .6, 
+      .width = 0, 
+      justification = -.3, 
+      point_colour = NA) + 
+    geom_boxplot(
+      width = .5, 
+      outlier.shape = NA
+    ) +
+    geom_point(
+      size = 1.5,
+      alpha = .01,
+      position = position_jitter(
+        seed = 1, width = .1
+      )
+    ) 
 }
 
 # Function to create grouped boxplots with color by gender
 create_grouped_boxplot <- function(data, x_var, y_var, x_label = NULL, show_legend = FALSE) {
   p <- ggplot(data, aes(x = as.factor(!!sym(x_var)), y = !!sym(y_var))) +
-    geom_boxplot() +
-    geom_point(aes(colour = as.factor(female))) +
-    scale_color_manual(values = c("0"="red", "1"="blue"), 
-                       labels = c("0"="Hombre", "1"="Mujer"), 
-                       name = "Sexo") +
+    labs(x = x_label, y = "Total Income (log)") +
+    ggdist::stat_halfeye(
+      adjust = .5, 
+      width = .6, 
+      .width = 0, 
+      justification = -.3, 
+      point_colour = NA) + 
+    geom_boxplot(
+      width = .5, 
+      outlier.shape = NA
+    ) +
+    geom_point(
+      size = 1.5,
+      alpha = .01,
+      position = position_jitter(
+        seed = 1, width = .1
+      )
+    ) 
     labs(x = x_label, y = "Total Income (log)")
   
   # Hide legend if show_legend is FALSE
@@ -197,19 +224,25 @@ create_grouped_boxplot <- function(data, x_var, y_var, x_label = NULL, show_lege
 }
 
 # Create plots
-a <- create_boxplot(db_geih_1, "totalHoursWorked", "Total Hours Worked")
+a <- create_boxplot(db_geih_1, "log_ingtot", "Total Income (log)")
 b <- create_boxplot(db_geih_1, "age", "Age")
-c <- create_boxplot(db_geih_1, "log_ingtot", "Total Income (log)")
-d <- create_grouped_boxplot(db_geih_1, "estrato1", "log_ingtot", "Socioeconomic Stratum")  # Show legend here
-e <- create_grouped_boxplot(db_geih_1, "cuentaPropia", "log_ingtot", "Self-Employed")
-f <- create_grouped_boxplot(db_geih_1, "maxEducLevel", "log_ingtot", "Max Education Level", show_legend = TRUE)
+c <- create_boxplot(db_geih_1, "totalHoursWorked", "Total hours worked")
+d <- create_boxplot(db_geih_1, "tiempo_trabajando", "Work experience") 
+e <- create_grouped_boxplot(db_geih_1, "nmenores", "Children per household") 
+f <- create_grouped_boxplot(db_geih_1, "estrato1", "log_ingtot", "Socioeconomic Stratum") 
+g <- create_grouped_boxplot(db_geih_1, "female", "log_ingtot", "Gender") 
+h <- create_grouped_boxplot(db_geih_1, "cuentaPropia", "log_ingtot", "Self-Employed")
+i <- create_grouped_boxplot(db_geih_1, "maxEducLevel", "log_ingtot", "Max Education Level")
+j <- create_grouped_boxplot(db_geih_1, "formal", "log_ingtot", "Formal job") 
+k <- create_grouped_boxplot(db_geih_1, "otro_trabajo", "log_ingtot", "Second job") 
+l <- create_grouped_boxplot(db_geih_1, "sizeFirm", "log_ingtot", "Size of the firm") 
 
 # Arrange all plots in a grid
+p_grid <- grid.arrange(a, b, c, d, e, f, ncol = 3)
+ggsave("views/histograms.pdf", plot = p_grid, width = 8.27) 
 
-arrange_plot <- grid.arrange(a, b, c, d, e, f, ncol = 3)
-
-# Guardar la imagen
-ggsave("views/arrange_1.png", plot = arrange_plot, width = 12, height = 8, dpi = 300)
+p_grid <- grid.arrange(g, h, i, j, k, l, ncol = 3)
+ggsave("views/histograms_1.pdf", plot = p_grid, width = 8.27) 
 
 
 # Histograms Hours, age, income
